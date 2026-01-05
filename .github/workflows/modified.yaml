@@ -1,0 +1,57 @@
+name: General Linting
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   pull_request:
+#     types: [opened, synchronize, edited]
+#   push:
+#     branches:
+#       - 'main'
+#       - 'develop'
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  code-linting:
+    name: General Code Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - run: |
+          poetry install
+
+      - run: poetry run black --diff --check financetoolkit
+
+      - run: poetry run ruff check financetoolkit
+      
+      - run: poetry run pylint financetoolkit
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
+
+  # CINTENT >> NO_TRACEE
+  # markdown-link-check:
+  #   name: Markdown Linting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       name: Check out the code
+  #     - name: Lint Code Base
+  #       uses: docker://avtodev/markdown-lint:v1
